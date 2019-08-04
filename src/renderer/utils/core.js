@@ -76,7 +76,7 @@ class ChildProcessFFmpeg {
           it.concat(
             `${outputPath}/${
               this.metaData.fileName
-            }${this._dateNow()}.${format}`
+            } ${this._dateNow()}.${format}`
           ),
           onProgress
         );
@@ -89,12 +89,12 @@ class ChildProcessFFmpeg {
 
   // child_process run ffmpeg
   spawnFFmpeg(commandLine, onProgress) {
-    console.log(commandLine);
     exec(`${ffmpegPath} -h`, err => {
       if (err) {
         console.log(err);
       }
       this.ffmpeg = spawn(`${ffmpegPath}`, commandLine);
+      console.log(this.encodeCommandLine(commandLine));
       // 捕获标准输出
       this.ffmpeg.stderr.on("data", data => {
         onProgress(
@@ -114,6 +114,25 @@ class ChildProcessFFmpeg {
   // stop ffmpeg
   stop() {
     this.ffmpeg.kill("SIGINT");
+  }
+
+  // 编码命令
+  encodeCommandLine(line) {
+    if (!line) return "";
+    return line
+      .reverse()
+      .concat("ffmpeg")
+      .reverse()
+      .join(" ");
+  }
+
+  // 解码命令
+  decodeCommandLine(line) {
+    if (!line) return [];
+    return line
+      .replace("ffmpeg", "")
+      .split(" ")
+      .filter(it => it !== "");
   }
 
   // convert Video
@@ -227,6 +246,13 @@ class ChildProcessFFmpeg {
     ];
   }
 
+  // Rotate Videos using ffmpeg
+  // ffmpeg -i in.mp4 -vf "transpose=1" -codec:a copy out.mp4
+  // 0 = 90CounterCLockwise and Vertical Flip (default)
+  // 1 = 90Clockwise
+  // 2 = 90CounterClockwise
+  // 3 = 90Clockwise and Vertical Flip
+
   // 字符转对象
   parseProgressLine(line) {
     var progress = {};
@@ -249,7 +275,7 @@ class ChildProcessFFmpeg {
 
     return progress;
   }
-  
+
   // 获取进度
   extractProgress(duration, stderrLine) {
     var progress = this.parseProgressLine(stderrLine);
