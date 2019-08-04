@@ -92,6 +92,24 @@
         </el-tab-pane>
       </el-tabs>
     </div>
+    <!-- 设置 -->
+    <el-form :inline="true" :model="settingFormInline" class="setting-form-inline" size="small">
+      <el-form-item label="分辨率">
+        <Size :width.sync="settingFormInline.width" :height.sync="settingFormInline.height" />
+      </el-form-item>
+      <el-form-item label="格式">
+        <Format
+          :formatValue.sync="settingFormInline.formatValue"
+          :formatOptions="settingFormInline.formatOptions"
+        />
+      </el-form-item>
+      <el-form-item label="FPS">
+        <Fps :fpsValue.sync="settingFormInline.fpsValue" />
+      </el-form-item>
+      <el-form-item label="硬件加速">
+        <Hardware :hardwareValue.sync="settingFormInline.hardwareValue" />
+      </el-form-item>
+    </el-form>
     <div class="selecter">
       <el-input placeholder="请选择保存位置" v-model="save" :disabled="true">
         <template slot="prepend">
@@ -102,6 +120,7 @@
     <div class="progress" v-if="progress">
       <el-progress :text-inside="true" :stroke-width="20" :percentage="progress" color="#67C23A"></el-progress>
     </div>
+    <!-- 操作 -->
     <div class="footer">
       <el-button type="primary" @click="startCommand()">转换</el-button>
       <el-button type="primary" @click="stopCommand()">中止</el-button>
@@ -113,12 +132,33 @@
 import { sec_to_time, getProgress, dateNow, getFilename } from "@/utils/common";
 import ChildProcessFFmpeg from "@/utils/core";
 import AudioSlider from "@/components/AudioSlider";
+import Size from "@/components/Size";
+import Format from "@/components/Format";
+import Fps from "@/components/Fps";
+import Hardware from "@/components/Hardware";
 
 let ffmpeg = new ChildProcessFFmpeg();
 
 export default {
   data() {
     return {
+      settingFormInline: {
+        width: "1920",
+        height: "1080",
+        formatValue: "mp4",
+        formatOptions: [
+          {
+            value: "mp4",
+            label: "mp4"
+          },
+          {
+            value: "mkv",
+            label: "mkv"
+          }
+        ],
+        fpsValue: "15",
+        hardwareValue: true
+      },
       video: "",
       audio: "",
       save: "",
@@ -130,7 +170,11 @@ export default {
     };
   },
   components: {
-    AudioSlider
+    AudioSlider,
+    Size,
+    Format,
+    Fps,
+    Hardware
   },
   watch: {
     video(val, oldVal) {
