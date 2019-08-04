@@ -12,7 +12,7 @@
 <script>
 export default {
   props: {
-    fpsValue: {
+    fps: {
       type: String
     }
   },
@@ -26,10 +26,10 @@ export default {
   computed: {
     computedFps: {
       get() {
-        return this.fpsValue;
+        return this.fps;
       },
       set(val) {
-        this.$emit("update:fpsValue", val);
+        this.$emit("update:fps", val);
       }
     }
   }

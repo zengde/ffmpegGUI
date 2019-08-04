@@ -14,7 +14,7 @@
 <script>
 export default {
   props: {
-    formatValue: {
+    format: {
       type: String
     },
     formatOptions: {
@@ -27,10 +27,10 @@ export default {
   computed: {
     computedFormat: {
       get() {
-        return this.formatValue;
+        return this.format;
       },
       set(val) {
-        this.$emit("update:formatValue", val);
+        this.$emit("update:format", val);
       }
     }
   }

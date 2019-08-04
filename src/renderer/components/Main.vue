@@ -92,24 +92,6 @@
         </el-tab-pane>
       </el-tabs>
     </div>
-    <!-- 设置 -->
-    <el-form :inline="true" :model="settingFormInline" class="setting-form-inline" size="small">
-      <el-form-item label="分辨率">
-        <Size :width.sync="settingFormInline.width" :height.sync="settingFormInline.height" />
-      </el-form-item>
-      <el-form-item label="格式">
-        <Format
-          :formatValue.sync="settingFormInline.formatValue"
-          :formatOptions="settingFormInline.formatOptions"
-        />
-      </el-form-item>
-      <el-form-item label="FPS">
-        <Fps :fpsValue.sync="settingFormInline.fpsValue" />
-      </el-form-item>
-      <el-form-item label="硬件加速">
-        <Hardware :hardwareValue.sync="settingFormInline.hardwareValue" />
-      </el-form-item>
-    </el-form>
     <div class="selecter">
       <el-input placeholder="请选择保存位置" v-model="save" :disabled="true">
         <template slot="prepend">
@@ -120,11 +102,12 @@
     <div class="progress" v-if="progress">
       <el-progress :text-inside="true" :stroke-width="20" :percentage="progress" color="#67C23A"></el-progress>
     </div>
-    <!-- 操作 -->
-    <div class="footer">
-      <el-button type="primary" @click="startCommand()">转换</el-button>
-      <el-button type="primary" @click="stopCommand()">中止</el-button>
-    </div>
+    <!-- 设置 -->
+    <Menu
+      @updateStartCommand="startCommand"
+      @updateStopCommand="stopCommand"
+      :activeTab="activeTab"
+    />
   </div>
 </template>
 
@@ -132,33 +115,13 @@
 import { sec_to_time, getProgress, dateNow, getFilename } from "@/utils/common";
 import ChildProcessFFmpeg from "@/utils/core";
 import AudioSlider from "@/components/AudioSlider";
-import Size from "@/components/Size";
-import Format from "@/components/Format";
-import Fps from "@/components/Fps";
-import Hardware from "@/components/Hardware";
+import Menu from "@/components/Menu";
 
 let ffmpeg = new ChildProcessFFmpeg();
 
 export default {
   data() {
     return {
-      settingFormInline: {
-        width: "1920",
-        height: "1080",
-        formatValue: "mp4",
-        formatOptions: [
-          {
-            value: "mp4",
-            label: "mp4"
-          },
-          {
-            value: "mkv",
-            label: "mkv"
-          }
-        ],
-        fpsValue: "15",
-        hardwareValue: true
-      },
       video: "",
       audio: "",
       save: "",
@@ -168,29 +131,6 @@ export default {
       cutAudioMarks: {},
       cutAudioValue: [0, 0]
     };
-  },
-  components: {
-    AudioSlider,
-    Size,
-    Format,
-    Fps,
-    Hardware
-  },
-  watch: {
-    video(val, oldVal) {
-      if (val) {
-        console.log("video", val);
-        this.videoPath = val;
-        this.getMediaInfo(val);
-      }
-    },
-    audio(val, oldVal) {
-      if (val) {
-        console.log("audio", val);
-        this.audioPath = val;
-        this.getMediaInfo(val);
-      }
-    }
   },
   methods: {
     // 切换 tabs
@@ -234,7 +174,7 @@ export default {
         };
       });
     },
-    startConversion(command, format, time) {
+    startConversion(command, setting) {
       let inputPath = [];
       switch (command) {
         case "convertMerge":
@@ -255,8 +195,7 @@ export default {
         outputPath: this.save,
         onProgress: this.onProgress,
         command,
-        format,
-        time
+        setting
       };
       ffmpeg.convert({ ...params });
     },
@@ -264,14 +203,14 @@ export default {
       this.progress = +data;
     },
     // 开始转码
-    startCommand() {
+    startCommand(setting) {
       // 基于fluentFFmpeg的转码
       if (this.activeTab === "video") {
         if (this.video === "") {
           this.msg("视频路径为空", "warning");
           return;
         }
-        this.startConversion("convertVideo", "mp4");
+        this.startConversion("convertVideo", setting);
       }
       if (this.activeTab === "audio") {
         if (this.audio === "") {
@@ -300,16 +239,6 @@ export default {
       }
       if (this.activeTab === "gif") {
         this.startConversion("convertGIF", "gif", [0, 5]);
-        // let videoToGif = [
-        //   "-i",
-        //   this.video,
-        //   "-s",
-        //   "320x180",
-        //   "-r",
-        //   "15",
-        //   `${this.save}/${this.filename}${dateNow()}.gif`
-        // ];
-        // this.coverTo(videoToGif);
       }
     },
     // 停止转码
@@ -317,6 +246,26 @@ export default {
       ffmpeg.stop();
       this.progress = 0;
     }
+  },
+  watch: {
+    video(val, oldVal) {
+      if (val) {
+        console.log("video", val);
+        this.videoPath = val;
+        this.getMediaInfo(val);
+      }
+    },
+    audio(val, oldVal) {
+      if (val) {
+        console.log("audio", val);
+        this.audioPath = val;
+        this.getMediaInfo(val);
+      }
+    }
+  },
+  components: {
+    Menu,
+    AudioSlider
   }
 };
 </script>
@@ -343,10 +292,6 @@ export default {
 /* .selecter:last-child {
   margin-bottom: 0;
 } */
-.footer {
-  text-align: center;
-  margin-top: 20px;
-}
 
 .card .card-hd {
   float: left;

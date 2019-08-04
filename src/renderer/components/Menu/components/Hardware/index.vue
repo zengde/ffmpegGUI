@@ -7,7 +7,7 @@
 <script>
 export default {
   props: {
-    hardwareValue: {
+    hardware: {
       type: Boolean
     }
   },
@@ -17,10 +17,10 @@ export default {
   computed: {
     computedHardware: {
       get() {
-        return this.hardwareValue;
+        return this.hardware;
       },
       set(val) {
-        this.$emit("update:hardwareValue", val);
+        this.$emit("update:hardware", val);
       }
     }
   }

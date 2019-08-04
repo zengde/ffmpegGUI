@@ -57,7 +57,8 @@ class ChildProcessFFmpeg {
   }
 
   // convert
-  async convert({ inputPath, outputPath, onProgress, command, format, time }) {
+  async convert({ inputPath, outputPath, onProgress, command, setting }) {
+    let { format, time } = setting;
     let originPath = inputPath.length > 1 ? inputPath : inputPath[0];
 
     try {
@@ -69,7 +70,7 @@ class ChildProcessFFmpeg {
         this[command]({
           inputPath: originPath,
           outputPath,
-          time
+          setting
         })
       ).then(it => {
         this.spawnFFmpeg(
@@ -137,8 +138,10 @@ class ChildProcessFFmpeg {
 
   // convert Video
   // ffmpeg -i test.webm -vcodec h264_videotoolbox -b:v 1744.5k test.mp4
-  convertVideo({ inputPath }) {
-    return [
+  // -vf scale=640:480 调整尺寸
+  convertVideo({ inputPath, setting }) {
+    let { width, height } = setting;
+    let baseLine = [
       "-i",
       inputPath,
       "-vcodec",
@@ -146,6 +149,8 @@ class ChildProcessFFmpeg {
       "-b:v",
       this.metaData.bit_rate
     ];
+
+    return;
   }
 
   // convert Audio
@@ -253,6 +258,13 @@ class ChildProcessFFmpeg {
   // 2 = 90CounterClockwise
   // 3 = 90Clockwise and Vertical Flip
 
+
+  // 提取音轨 
+  // ffmpeg -i in.m4v -vn -acodec mp3 out.mp3
+
+  // 截取视频片段
+  // ffmpeg -i in.m4v -ss 00:07:48 -to 00:36:48.50 out.mp4
+  
   // 字符转对象
   parseProgressLine(line) {
     var progress = {};
