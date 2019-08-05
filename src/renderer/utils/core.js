@@ -100,7 +100,7 @@ class ChildProcessFFmpeg {
 
   // child_process run ffmpeg
   spawnFFmpeg(commandLine, onProgress) {
-    console.log(commandLine)
+    console.log(commandLine);
     exec(`${ffmpegPath} -h`, err => {
       if (err) {
         console.log(err);
@@ -109,7 +109,7 @@ class ChildProcessFFmpeg {
       console.log(this.encodeCommandLine(commandLine));
       // 捕获标准输出
       this.ffmpeg.stderr.on("data", data => {
-        console.log(data.toString())
+        console.log(data.toString());
         onProgress(
           this.extractProgress(this.metaData.duration, data.toString())
         );
@@ -151,13 +151,19 @@ class ChildProcessFFmpeg {
   // convert Video
   // ffmpeg -i test.webm -vcodec h264_videotoolbox -b:v 1744.5k test.mp4
   // -vf scale=640:480 调整尺寸
+  // '-s', `${makeEven(opts.width)}x${makeEven(opts.height)}`,
+  // 360P 以下是无法开启硬件加速的
   convertVideo({ inputPath, setting }) {
     const { width: settingWidth, height: settingHeight } = setting;
     const { width: originWidth } = this.metaData;
+    const makeEven = n => 2 * Math.round(n / 2);
     let patchLine = [];
 
     if (settingWidth != originWidth) {
-      patchLine = ["-vf", `scale=-1:${settingHeight}`];
+      patchLine = [
+        "-s",
+        `${makeEven(settingWidth)}x${makeEven(settingHeight)}`
+      ];
     }
 
     return [
