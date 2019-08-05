@@ -58,7 +58,7 @@ class ChildProcessFFmpeg {
 
   // convert
   async convert({ inputPath, outputPath, onProgress, command, setting }) {
-    let { format, time } = setting;
+    let { format, time, hardware } = setting;
     let originPath = inputPath.length > 1 ? inputPath : inputPath[0];
 
     try {
@@ -66,6 +66,16 @@ class ChildProcessFFmpeg {
       let info = await this._getInfo(originPath);
       this.metaData = await this._gatherData(info);
 
+      // 硬件加速处理
+      if (hardware) {
+        let hwaccels = await this._getAvailableHwaccels();
+        console.log(hwaccels);
+        this.vcodec = hwaccels[0];
+      } else {
+        this.vcodec = "libx264";
+      }
+
+      // 命令处理
       Promise.resolve(
         this[command]({
           inputPath: originPath,
@@ -90,6 +100,7 @@ class ChildProcessFFmpeg {
 
   // child_process run ffmpeg
   spawnFFmpeg(commandLine, onProgress) {
+    console.log(commandLine)
     exec(`${ffmpegPath} -h`, err => {
       if (err) {
         console.log(err);
@@ -98,6 +109,7 @@ class ChildProcessFFmpeg {
       console.log(this.encodeCommandLine(commandLine));
       // 捕获标准输出
       this.ffmpeg.stderr.on("data", data => {
+        console.log(data.toString())
         onProgress(
           this.extractProgress(this.metaData.duration, data.toString())
         );
@@ -140,17 +152,23 @@ class ChildProcessFFmpeg {
   // ffmpeg -i test.webm -vcodec h264_videotoolbox -b:v 1744.5k test.mp4
   // -vf scale=640:480 调整尺寸
   convertVideo({ inputPath, setting }) {
-    let { width, height } = setting;
-    let baseLine = [
+    const { width: settingWidth, height: settingHeight } = setting;
+    const { width: originWidth } = this.metaData;
+    let patchLine = [];
+
+    if (settingWidth != originWidth) {
+      patchLine = ["-vf", `scale=-1:${settingHeight}`];
+    }
+
+    return [
       "-i",
       inputPath,
+      ...patchLine,
       "-vcodec",
       this.vcodec,
       "-b:v",
       this.metaData.bit_rate
     ];
-
-    return;
   }
 
   // convert Audio
@@ -258,13 +276,12 @@ class ChildProcessFFmpeg {
   // 2 = 90CounterClockwise
   // 3 = 90Clockwise and Vertical Flip
 
-
-  // 提取音轨 
+  // 提取音轨
   // ffmpeg -i in.m4v -vn -acodec mp3 out.mp3
 
   // 截取视频片段
   // ffmpeg -i in.m4v -ss 00:07:48 -to 00:36:48.50 out.mp4
-  
+
   // 字符转对象
   parseProgressLine(line) {
     var progress = {};
@@ -334,9 +351,6 @@ class ChildProcessFFmpeg {
     try {
       let info = await this._getInfo(inputPath);
       let mediaInfo = await this._gatherData(info);
-      let hwaccels = await this._getAvailableHwaccels();
-      console.log(hwaccels);
-      this.vcodec = hwaccels.length ? hwaccels[0] : "libx264"; //如果不支持硬解就用软解
       return mediaInfo;
     } catch (error) {
       console.log(error);

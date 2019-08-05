@@ -41,7 +41,7 @@ export default {
         width: "1920",
         height: "1080",
         fps: "15",
-        hardware: true,
+        hardware: false,
         format: "mp4"
       },
       formatOptions: [
