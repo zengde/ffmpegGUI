@@ -367,7 +367,7 @@ class ChildProcessFFmpeg {
   _getInfo(inputPath) {
     return new Promise((resolve, reject) => {
       ffmpeg()
-        .input(inputPath)
+        .input(Array.isArray(inputPath) ? inputPath[0] : inputPath)
         .ffprobe((err, data) => {
           if (err) {
             reject(err);
