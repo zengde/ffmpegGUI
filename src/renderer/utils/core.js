@@ -153,6 +153,7 @@ class ChildProcessFFmpeg {
   // -vf scale=640:480 调整尺寸
   // '-s', `${makeEven(opts.width)}x${makeEven(opts.height)}`,
   // 360P 以下是无法开启硬件加速的
+  // https://rollingstarky.github.io/2019/03/10/ffmpeg-user-manual-and-practical-examples/
   convertVideo({ inputPath, setting }) {
     const { width: settingWidth, height: settingHeight } = setting;
     const { width: originWidth } = this.metaData;
