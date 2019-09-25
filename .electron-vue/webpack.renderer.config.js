@@ -114,6 +114,19 @@ let rendererConfig = {
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: path.resolve(__dirname, '../src/index.ejs'),
+      // fix node12 process not defined
+      templateParameters(compilation, assets, options) {
+        return {
+          compilation: compilation,
+          webpack: compilation.getStats().toJson(),
+          webpackConfig: compilation.options,
+          htmlWebpackPlugin: {
+            files: assets,
+            options: options
+          },
+          process,
+        };
+      },
       minify: {
         collapseWhitespace: true,
         removeAttributeQuotes: true,
@@ -157,6 +170,7 @@ if (process.env.NODE_ENV !== 'production') {
  */
 if (process.env.NODE_ENV === 'production') {
   // 打包不同平台的 ffmpeg 到 app
+  /*
   const ffmpegBasePath = '../node_modules/ffmpeg-static/bin/'   // ffmpeg-static
   const ffprobeBasePath = '../node_modules/ffprobe-static/bin/' // ffprobe-static
   const { platform } = process
@@ -176,6 +190,7 @@ if (process.env.NODE_ENV === 'production') {
   }
   const ffmpegPath = ffmpegBasePath + ffmpegPathMap[platform]
   const ffprobePath = ffprobeBasePath + ffprobePathMap[platform]
+  */
 
   rendererConfig.devtool = ''
 
@@ -187,6 +202,7 @@ if (process.env.NODE_ENV === 'production') {
         to: path.join(__dirname, '../dist/electron/static'),
         ignore: ['.*']
       },
+      /*
       {
         from: path.join(__dirname, ffmpegPath),
         to: path.join(__dirname, '../core'),
@@ -197,6 +213,7 @@ if (process.env.NODE_ENV === 'production') {
         to: path.join(__dirname, '../core'),
         ignore: ['.*']
       }
+      */
     ]),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': '"production"'

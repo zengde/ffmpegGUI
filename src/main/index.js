@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Menu } from "electron";
+
 const { platform } = process
 
 const template = [
@@ -70,6 +71,9 @@ function createWindow() {
     titleBarStyle: "hidden",
     width: 1000,
     show: false, //默认隐藏
+    webPreferences: {
+      nodeIntegration: true // fix require,module not defined
+    },
   });
 
   mainWindow.loadURL(winURL);

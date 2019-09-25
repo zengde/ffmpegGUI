@@ -1,18 +1,19 @@
 import { resolve } from "path";
 import ffmpeg from "fluent-ffmpeg";
-import ffmpegStatic from "ffmpeg-static";
-import ffprobeStatic from "ffprobe-static";
+// import ffmpegStatic from "ffmpeg-static";
+// import ffprobeStatic from "ffprobe-static";
 import { time_to_sec } from "@/utils/common";
 
 const tmp = require("tmp");
 const exec = require("child_process").exec;
 const spawn = require("child_process").spawn;
 
-let ffmpegPath = ffmpegStatic.path;
-let ffprobePath = ffprobeStatic.path;
+let ffmpegPath = 'ffmpeg'; // ffmpegStatic.path;
+let ffprobePath = 'ffprobe'; // ffprobeStatic.path;
 let basePath = resolve(__dirname, "../../../core/");
 
 // 更新打包后 ffmpeg、ffprobe 路径
+/*
 if (process.env.NODE_ENV == "production") {
   const fs = require("fs");
 
@@ -47,6 +48,7 @@ if (process.env.NODE_ENV == "production") {
 // 设置 fluent-ffmpeg 的 ffmpeg 、ffprobe路径
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
+*/
 
 class ChildProcessFFmpeg {
   constructor() {
@@ -227,6 +229,16 @@ class ChildProcessFFmpeg {
     ];
   }
 
+  // ffmpeg -i url.m3u8 -c copy output.mp4
+  downLoadM3u8({ inputPath }) {
+    return [
+      "-i",
+      inputPath,
+      "-c",
+      "copy"
+    ];
+  }
+
   // 字符转对象
   parseProgressLine(line) {
     var progress = {};
@@ -298,7 +310,7 @@ class ChildProcessFFmpeg {
       let mediaInfo = await this._gatherData(info);
       let hwaccels = await this._getAvailableHwaccels();
       console.log(hwaccels);
-      this.vcodec = hwaccels.length ? hwaccels[0] : "libx264"; //如果不支持硬解就用软解
+      this.vcodec = "libx264"; // hwaccels.length ? hwaccels[0] : "libx264"; //如果不支持硬解就用软解
       return mediaInfo;
     } catch (error) {
       console.log(error);
@@ -306,6 +318,7 @@ class ChildProcessFFmpeg {
   }
 
   // 获取媒体相关信息
+  // ffprobe -of json -show_streams -show_format /path/to/file.avi
   _getInfo(inputPath) {
     return new Promise((resolve, reject) => {
       ffmpeg()
@@ -322,7 +335,8 @@ class ChildProcessFFmpeg {
 
   // 解析并整合媒体相关信息
   _gatherData(data) {
-    let stream = data.streams[0];
+    console.dir(data);
+    let stream = data.streams.find(element => element.codec_type ==='video');
     let {
       format: {
         bit_rate = 0,
@@ -348,7 +362,9 @@ class ChildProcessFFmpeg {
   // 获取文件名称
   _getFilename(filename) {
     const path = require("path");
-    const filenameArr = filename.split(path.sep);
+    // 统一转为/, 方便支持url
+    filename = filename.replace(path.sep, "/");
+    const filenameArr = filename.split("/");
     let fullName = filenameArr[filenameArr.length - 1];
     return fullName.slice(0, fullName.lastIndexOf("."));
   }

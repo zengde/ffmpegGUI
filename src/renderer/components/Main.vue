@@ -90,6 +90,18 @@
             </el-input>
           </div>
         </el-tab-pane>
+        <el-tab-pane name="m3u8">
+          <span slot="label">
+            <i class="el-icon-video-play"></i> m3u8下载
+          </span>
+          <div class="selecter">
+            <el-input placeholder="请输入m3u8视频" v-model="m3u8_url">
+              <template slot="prepend">
+                <el-button type="primary">m3u8地址</el-button>
+              </template>
+            </el-input>
+          </div>
+        </el-tab-pane>
       </el-tabs>
     </div>
     <div class="selecter">
@@ -121,13 +133,23 @@ export default {
     return {
       video: "",
       audio: "",
-      save: "",
       progress: 0,
       activeTab: "video",
       duration: 0,
       cutAudioMarks: {},
-      cutAudioValue: [0, 0]
+      cutAudioValue: [0, 0],
+      m3u8_url: "",
     };
+  },
+  computed: {
+    save: {
+      get() {
+        return this.$store.state.app.save;
+      },
+      set (value) {
+        this.$store.dispatch('updateSave', value);
+      }
+    }
   },
   components: {
     AudioSlider
@@ -155,6 +177,7 @@ export default {
       this.audio = "";
       this.cutAudioValue = [0, 0];
       this.cutAudioMarks = {};
+      this.m3u8_url = "";
     },
     // 消息通知
     msg(msg, type) {
@@ -202,6 +225,9 @@ export default {
         case "convertCutAudio":
           inputPath = [this.audioPath];
           break;
+        case "downLoadM3u8":
+          inputPath = [this.m3u8_url];
+          break;
         default:
           inputPath = [this.videoPath];
           break;
@@ -217,6 +243,8 @@ export default {
       ffmpeg.convert({ ...params });
     },
     onProgress(data) {
+      data = parseFloat(data);
+      if (isNaN(data)) return;
       this.progress = +data;
     },
     // 开始转码
@@ -266,6 +294,9 @@ export default {
         //   `${this.save}/${this.filename}${dateNow()}.gif`
         // ];
         // this.coverTo(videoToGif);
+      }
+      if (this.activeTab === "m3u8") {
+        this.startConversion("downLoadM3u8", "mp4");
       }
     },
     // 停止转码
